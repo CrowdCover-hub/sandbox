@@ -6,6 +6,7 @@ This project aims to integrate a sports data API into a web application.
 ## Features
 - Retrieve sports data from the API
 - Display live scores and statistics
+- Connect to WordPress website and update live content
 
 ## Installation
 1. TBD

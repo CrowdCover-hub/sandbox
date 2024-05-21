@@ -29,3 +29,9 @@ __pycache__/
 
 # Ignore secret key file
 /secret_key.txt
+
+# Ignore json
+*.json
+
+# Ignore schedule cache
+mlb/cache_schedules/

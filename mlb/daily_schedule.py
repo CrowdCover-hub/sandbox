@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 
 def get_daily_schedule(date):
      """
-     Automatically gets daily schedules
+     Returns sorted list of MLB games scheduled for a specific date
      'date' format: YYYYMMDD
      """
      # Step 1: Check if file already exists in local cache
@@ -19,7 +19,8 @@ def get_daily_schedule(date):
      #         Else load data with cached file
      data = None
      if (not file_exists): 
-          data = _call_api(date, full_path)
+          data = _call_api(date)
+          _save_data_locally(data)
      else: 
           # TODO: make this a helper function
           with open(full_path, 'r') as file:
@@ -30,7 +31,7 @@ def get_daily_schedule(date):
      data =_sort_games(data)
      return data
 #---------------------------------------------------------------------------------------------------------------------
-def _call_api(date,filename):
+def _call_api(date):
      '''Calls Tank MLB api to get daily schedule'''
      # Step 1: build http request
      query_string = {"gameDate":date}
@@ -40,15 +41,12 @@ def _call_api(date,filename):
           "X-RapidAPI-Host": os.getenv('HOST')
      }
      
-     # Step 2: try to call API
+     # Step 2: try to call API & return data
      try:
           url = "https://tank01-mlb-live-in-game-real-time-statistics.p.rapidapi.com/getMLBGamesForDate"
           print(f"Calling API: {url}")
           response = requests.get(url, headers=headers, params=query_string)
           data = response.json()
-          with open(filename, 'w') as f:
-               json.dump(data, f)
-               print(f"New file created: {filename}")
      except Exception as e:
           print(f"- Error: {e}")
           print(f"- Response: {response}")
@@ -64,10 +62,7 @@ def _sort_games(data):
      games = data.get('body', [])
      sorted_games = sorted(games, key=lambda game: float(game['gameTime_epoch']))
      return sorted_games
-#---------------------------------------------------------------------------------------------------------------------
-def _get_post_body(sorted_games):
-     # TODO: build the json package to be delivered to frontend WordPress Rest API
-     return
+
 #---------------------------------------------------------------------------------------------------------------------
 def print_sorted_games(sorted_games):
      '''Takes return "data" from  "get_daily_schedule(date)"'''
@@ -86,14 +81,14 @@ def print_sorted_games(sorted_games):
           print(f"Probable Starting Pitchers: {game['probableStartingPitchers']}")
           print(f"Home Team: {game['home']}")
 #---------------------------------------------------------------------------------------------------------------------
-def _build_json_body(sorted_games):
-     frontend_data = {}
+def get_timetable(sorted_games):
+     '''Return a nested dictionary from get_daily_schedule'''
+     frontend_data = {} # This is a nested dictionary
      
      # Iterate over the sorted games
      for game in sorted_games:
-          
           # Create a nested dictionary for each game
-          nested_dict = {
+          dict_entry = {
                'away': mlb_teams.get_team(game['away']),
                'home': mlb_teams.get_team(game['home']),
                'gameTime': game['gameTime'],# Game Time is always in Eastern time zone
@@ -101,14 +96,16 @@ def _build_json_body(sorted_games):
           }
 
           # Add the nested dictionary to the frontend_data dictionary
-          frontend_data[game['gameID']] = nested_dict
+          frontend_data[game['gameID']] = dict_entry
      return frontend_data
 #---------------------------------------------------------------------------------------------------------------------
-def save_json_locally(data,filename, dir_path):
-     # TODO: add try, except
-     with open(filename, 'w') as f:
-               json.dump(data, f)
-               print(f"New file created: {filename}")
+def _save_data_locally(data,fullpath):
+     try:
+          with open(fullpath, 'w') as file:
+               json.dump(data, file)
+               print(f"New file created: {fullpath}")
+     except Exception as e:
+          print(f"Error saving data locally: {e}")
                
 def _helper_fullpath(filename):
      '''Calculates directory path for caching schedules'''

@@ -1,10 +1,11 @@
-import daily_schedule
 import proxy
 
 def main():
+     ''''''
      print("----Start of Program----")
-     proxy.MLB_process()
-     
+     mlb=proxy.MLB_logic()
+     mlb.execute()
+     mlb.print_daily_data()
      print("----End of Program----")
      return 0
 
